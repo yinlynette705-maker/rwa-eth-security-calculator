@@ -259,7 +259,7 @@
         <span>普通用户可读版</span>
       </div>
       <div class="model-table">
-        <div class="table-head"><span>模型</span><span>普通用户解释</span><span>所需 ETH 市值</span><span>对应 ETH 价格</span><span>约为当前市值</span></div>
+        <div class="table-head"><span>模型</span><span>普通用户解释</span><span>所需 ETH 市值</span><span>对应 ETH 价格</span><span>约为当前 ETH 市值</span></div>
         <div id="model-rows"></div>
       </div>
     </section>
@@ -334,7 +334,7 @@
         <div class="bar-row">
           <div class="bar-label">${item.name}</div>
           <div class="bar-track"><div class="bar-fill" style="width:${Math.max(2, item.requiredMarketCap / chartMax * 100)}%; background:${item.color}"></div></div>
-          <div class="bar-value"><b>${formatUsd(item.requiredMarketCap)}</b><span>${formatPrice(item.ethPrice)} · ${item.multiple.toFixed(item.multiple < 0.1 ? 2 : 1)}x</span></div>
+          <div class="bar-value"><b>${formatUsd(item.requiredMarketCap)}</b><span>${formatPrice(item.ethPrice)} · 当前 ETH 市值 ${item.multiple.toFixed(item.multiple < 0.1 ? 2 : 1)}x</span></div>
         </div>
       `).join("");
 
