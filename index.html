@@ -150,6 +150,43 @@
     .model-name b, .table-row strong { color: #162033; font-size: 14px; line-height: 1.25; }
     .table-row p { color: #5f6f83; font-size: 13px; line-height: 1.45; }
 
+    .summary {
+      margin-top: 18px;
+      border: 1px solid #dfe7f2;
+      border-radius: 8px;
+      background: #fbfcff;
+      padding: 16px;
+    }
+    .summary h3 {
+      margin: 0;
+      color: #121b2b;
+      font-size: 16px;
+      line-height: 1.25;
+    }
+    .summary > p {
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .summary-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .summary-item {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    .summary-item p {
+      color: #344256;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .summary-item strong { color: #153e91; font-weight: 800; }
+
     footer {
       padding: 14px 16px;
       color: #657184;
@@ -184,7 +221,6 @@
     </header>
 
     <section class="scope-bar" aria-label="计算口径">
-      <span>口径：ETH 链上 RWA</span>
       <span>单位：USD</span>
       <span>币价：全供应口径 + 流动口径</span>
     </section>
@@ -215,8 +251,13 @@
         <span>普通用户可读版</span>
       </div>
       <div class="model-table">
-        <div class="table-head"><span>模型</span><span>普通用户解释</span><span>所需 ETH 市值</span><span>全供应口径价格</span><span>流动口径价格</span><span>约为当前 ETH 市值</span></div>
+        <div class="table-head"><span>模型</span><span>普通用户解释</span><span>所需 ETH 市值</span><span>全供应口径价格</span><span>流动口径价格</span><span>约为当前价格</span></div>
         <div id="model-rows"></div>
+      </div>
+      <div class="summary">
+        <h3>结论解读</h3>
+        <p>基于上方表格的流动口径价格，可以得到以下理论安全阈值。</p>
+        <div class="summary-list" id="summary-list"></div>
       </div>
     </section>
 
@@ -231,11 +272,46 @@
     };
 
     const models = [
-      { name: "短期重组 / Reorg", description: "短时间内，刚确认的交易被回滚或改写。", ratio: 1, color: "#2f6fed", short: "R" },
-      { name: "最终性延迟 / 阻止", description: "交易无法及时获得最终确认，结算与赎回被卡住。", ratio: 0.114, color: "#4f9d84", short: "F" },
-      { name: "51%+ 长期攻击", description: "攻击者长期掌握共识主导权，链上裁决失去可信度。", ratio: 3.92, color: "#c78218", short: "51" },
-      { name: "经济攻击 / 治理攻击", description: "不直接打共识，而是攻击价格、流动性、治理或关键依赖。", ratio: 6, color: "#d1543f", short: "E" },
-      { name: "安全缓冲倍数", description: "用一个简单倍数衡量 ETH 经济安全垫是否足够厚。", ratio: 5, color: "#6b7280", short: "B" }
+      {
+        name: "短期重组 / Reorg",
+        description: "短时间内，刚确认的交易被回滚或改写。",
+        conclusion: "短时间内刚确认的交易被回滚或改写的风险，在本模型假设下理论上不具备经济可行性。",
+        ratio: 1,
+        color: "#2f6fed",
+        short: "R"
+      },
+      {
+        name: "最终性延迟 / 阻止",
+        description: "交易无法及时获得最终确认，结算与赎回被卡住。",
+        conclusion: "交易长时间无法获得最终确认、结算和赎回被卡住的风险，在本模型假设下理论上不具备经济可行性。",
+        ratio: 0.114,
+        color: "#4f9d84",
+        short: "F"
+      },
+      {
+        name: "51%+ 长期攻击",
+        description: "攻击者长期掌握共识主导权，链上裁决失去可信度。",
+        conclusion: "攻击者长期掌握共识主导权、让链上裁决失去可信度的风险，在本模型假设下理论上不具备经济可行性。",
+        ratio: 3.92,
+        color: "#c78218",
+        short: "51"
+      },
+      {
+        name: "经济攻击 / 治理攻击",
+        description: "不直接打共识，而是攻击价格、流动性、治理或关键依赖。",
+        conclusion: "通过价格、流动性、治理或关键外部依赖来破坏 RWA 系统的风险，在本模型假设下理论上不具备经济可行性。",
+        ratio: 6,
+        color: "#d1543f",
+        short: "E"
+      },
+      {
+        name: "安全缓冲倍数",
+        description: "用一个简单倍数衡量 ETH 经济安全垫是否足够厚。",
+        conclusion: "ETH 作为底层经济安全垫不足以承载当前链上资产规模的风险，在本模型假设下理论上处于可接受缓冲范围内。",
+        ratio: 5,
+        color: "#6b7280",
+        short: "B"
+      }
     ];
 
     const sliderMin = 100000000000;
@@ -267,7 +343,7 @@
           requiredMarketCap,
           ethPrice: requiredMarketCap / snapshot.eth.supply,
           liquidEthPrice: requiredMarketCap / liquidSupply,
-          multiple: requiredMarketCap / snapshot.eth.marketCapUsd
+          priceMultiple: (requiredMarketCap / liquidSupply) / snapshot.eth.priceUsd
         };
       });
     }
@@ -294,7 +370,14 @@
           <strong>${formatUsd(item.requiredMarketCap)}</strong>
           <strong>${formatPrice(item.ethPrice)}</strong>
           <strong>${formatPrice(item.liquidEthPrice)}</strong>
-          <strong>${item.multiple.toFixed(item.multiple < 0.1 ? 2 : 1)}x</strong>
+          <strong>${item.priceMultiple.toFixed(item.priceMultiple < 0.1 ? 2 : 1)}x</strong>
+        </div>
+      `).join("");
+
+      document.getElementById("summary-list").innerHTML = results.map(item => `
+        <div class="summary-item">
+          <span class="model-dot" style="color:${item.color}">${item.short}</span>
+          <p>当 ETH 流动口径价格高于 <strong>${formatPrice(item.liquidEthPrice)}</strong>，${item.conclusion}</p>
         </div>
       `).join("");
     }
