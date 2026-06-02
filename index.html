@@ -242,7 +242,7 @@
         <strong id="rwa-value">-</strong>
       </div>
       <input id="rwa-slider" type="range" aria-label="RWA 总规模">
-      <div class="marks"><span>$10B</span><span>$100B</span><span>$1T</span><span>$5T</span><span>$10T</span></div>
+      <div class="marks"><span>$100B</span><span>$500B</span><span>$1T</span><span>$5T</span><span>$10T</span></div>
     </section>
 
     <section class="panel">
@@ -282,7 +282,7 @@
       { name: "安全缓冲倍数", description: "用一个简单倍数衡量 ETH 经济安全垫是否足够厚。", ratio: 5, color: "#6b7280", short: "B" }
     ];
 
-    const sliderMin = 10000000000;
+    const sliderMin = 100000000000;
     const sliderMax = 10000000000000;
     let snapshot = fallbackSnapshot;
     let rwaScale = fallbackSnapshot.rwa.ethChainTotalUsd;
@@ -312,6 +312,10 @@
           multiple: requiredMarketCap / snapshot.eth.marketCapUsd
         };
       });
+    }
+
+    function clampRwaScale(value) {
+      return Math.min(sliderMax, Math.max(sliderMin, value));
     }
 
     function render() {
@@ -353,6 +357,7 @@
     slider.min = Math.log10(sliderMin);
     slider.max = Math.log10(sliderMax);
     slider.step = 0.001;
+    rwaScale = clampRwaScale(rwaScale);
     slider.value = Math.log10(rwaScale);
     slider.addEventListener("input", event => {
       rwaScale = Math.pow(10, Number(event.target.value));
@@ -363,7 +368,7 @@
       .then(response => response.ok ? response.json() : fallbackSnapshot)
       .then(data => {
         snapshot = data;
-        rwaScale = data.rwa.ethChainTotalUsd;
+        rwaScale = clampRwaScale(data.rwa.ethChainTotalUsd);
         slider.value = Math.log10(rwaScale);
         render();
       })
