@@ -148,15 +148,16 @@
     .bar-value span { color: #687385; font-size: 12px; font-weight: 650; }
 
     .model-table {
-      overflow: hidden;
+      overflow-x: auto;
       border: 1px solid #e4e9f1;
       border-radius: 8px;
     }
     .table-head, .table-row {
       display: grid;
-      grid-template-columns: 210px minmax(260px, 1fr) 150px 150px 140px;
+      grid-template-columns: 200px minmax(240px, 1fr) 140px 140px 140px 140px;
       align-items: center;
       gap: 16px;
+      min-width: 1040px;
     }
     .table-head {
       background: #f7f9fc;
@@ -198,7 +199,7 @@
       .bar-row { grid-template-columns: 1fr; gap: 7px; }
       .bar-value { justify-items: start; }
       .table-head { display: none; }
-      .table-row { grid-template-columns: 1fr; gap: 8px; }
+      .table-row { grid-template-columns: 1fr; gap: 8px; min-width: 0; }
     }
 
     @media (max-width: 560px) {
@@ -222,7 +223,7 @@
     <section class="scope-bar" aria-label="计算口径">
       <span>口径：ETH 链上 RWA</span>
       <span>单位：USD</span>
-      <span>币价：按当前供应量静态计算</span>
+      <span>币价：全供应口径 + 流动口径</span>
     </section>
 
     <section class="metrics" aria-label="当前数据">
@@ -259,12 +260,12 @@
         <span>普通用户可读版</span>
       </div>
       <div class="model-table">
-        <div class="table-head"><span>模型</span><span>普通用户解释</span><span>所需 ETH 市值</span><span>对应 ETH 价格</span><span>约为当前 ETH 市值</span></div>
+        <div class="table-head"><span>模型</span><span>普通用户解释</span><span>所需 ETH 市值</span><span>全供应口径价格</span><span>流动口径价格</span><span>约为当前 ETH 市值</span></div>
         <div id="model-rows"></div>
       </div>
     </section>
 
-    <footer>说明：这是启发式压力测试，不是投资建议。币价按当前供应量静态计算，暂不考虑通胀、通缩、燃烧、流动性与市场情绪。</footer>
+    <footer>说明：这是启发式压力测试，不是投资建议。全供应口径按当前供应量静态计算；流动口径按未质押供应量计算，暂不考虑通胀、通缩、燃烧、解质押周期、交易所深度与市场情绪。</footer>
   </main>
 
   <script>
@@ -303,12 +304,14 @@
     }
 
     function getResults() {
+      const liquidSupply = snapshot.eth.supply * (1 - snapshot.eth.stakingRatio);
       return models.map(model => {
         const requiredMarketCap = rwaScale * model.ratio;
         return {
           ...model,
           requiredMarketCap,
           ethPrice: requiredMarketCap / snapshot.eth.supply,
+          liquidEthPrice: requiredMarketCap / liquidSupply,
           multiple: requiredMarketCap / snapshot.eth.marketCapUsd
         };
       });
@@ -348,6 +351,7 @@
           <p>${item.description}</p>
           <strong>${formatUsd(item.requiredMarketCap)}</strong>
           <strong>${formatPrice(item.ethPrice)}</strong>
+          <strong>${formatPrice(item.liquidEthPrice)}</strong>
           <strong>${item.multiple.toFixed(item.multiple < 0.1 ? 2 : 1)}x</strong>
         </div>
       `).join("");
