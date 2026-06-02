@@ -112,41 +112,6 @@
     }
     .section-title span { color: #667085; font-size: 13px; font-weight: 650; }
 
-    .chart {
-      position: relative;
-      display: grid;
-      gap: 12px;
-      padding-top: 24px;
-    }
-    .marker {
-      position: absolute;
-      inset: 0 auto 0 var(--marker-left);
-      width: 1px;
-      background: rgba(20, 30, 46, 0.45);
-      pointer-events: none;
-    }
-    .marker span {
-      position: absolute;
-      top: 0;
-      left: 8px;
-      white-space: nowrap;
-      color: #3f4b5f;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .bar-row {
-      display: grid;
-      grid-template-columns: 170px minmax(160px, 1fr) 170px;
-      align-items: center;
-      gap: 14px;
-    }
-    .bar-label { color: #263244; font-size: 13px; font-weight: 700; }
-    .bar-track { height: 22px; overflow: hidden; border-radius: 6px; background: #edf1f7; }
-    .bar-fill { height: 100%; border-radius: 6px; }
-    .bar-value { display: grid; gap: 2px; justify-items: end; }
-    .bar-value b { color: #111827; font-size: 14px; }
-    .bar-value span { color: #687385; font-size: 12px; font-weight: 650; }
-
     .model-table {
       overflow-x: auto;
       border: 1px solid #e4e9f1;
@@ -196,8 +161,6 @@
       .page { width: min(100% - 28px, 720px); padding-top: 24px; }
       .header, .control-header, .section-title { display: grid; }
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .bar-row { grid-template-columns: 1fr; gap: 7px; }
-      .bar-value { justify-items: start; }
       .table-head { display: none; }
       .table-row { grid-template-columns: 1fr; gap: 8px; min-width: 0; }
     }
@@ -244,14 +207,6 @@
       </div>
       <input id="rwa-slider" type="range" aria-label="RWA 总规模">
       <div class="marks"><span>$100B</span><span>$500B</span><span>$1T</span><span>$5T</span><span>$10T</span></div>
-    </section>
-
-    <section class="panel">
-      <div class="section-title">
-        <h2>五类模型所需 ETH 市值</h2>
-        <span id="current-cap">当前 ETH 市值：-</span>
-      </div>
-      <div class="chart" id="chart"></div>
     </section>
 
     <section class="panel">
@@ -323,8 +278,6 @@
 
     function render() {
       const results = getResults();
-      const chartMax = Math.max(snapshot.eth.marketCapUsd, ...results.map(item => item.requiredMarketCap)) * 1.12;
-      const markerLeft = Math.min(100, snapshot.eth.marketCapUsd / chartMax * 100);
 
       document.getElementById("date").textContent = "数据日期 " + snapshot.updatedAt;
       document.getElementById("metric-rwa").textContent = formatUsd(snapshot.rwa.ethChainTotalUsd);
@@ -333,17 +286,6 @@
       document.getElementById("metric-supply").textContent = trim(snapshot.eth.supply / 1000000) + "M ETH";
       document.getElementById("metric-staking").textContent = (snapshot.eth.stakingRatio * 100).toFixed(1) + "%";
       document.getElementById("rwa-value").textContent = formatUsd(rwaScale);
-      document.getElementById("current-cap").textContent = "当前 ETH 市值：" + formatUsd(snapshot.eth.marketCapUsd);
-
-      const chart = document.getElementById("chart");
-      chart.style.setProperty("--marker-left", markerLeft + "%");
-      chart.innerHTML = `<div class="marker"><span>${formatUsd(snapshot.eth.marketCapUsd)}</span></div>` + results.map(item => `
-        <div class="bar-row">
-          <div class="bar-label">${item.name}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.max(2, item.requiredMarketCap / chartMax * 100)}%; background:${item.color}"></div></div>
-          <div class="bar-value"><b>${formatUsd(item.requiredMarketCap)}</b><span>${formatPrice(item.ethPrice)} · 当前 ETH 市值 ${item.multiple.toFixed(item.multiple < 0.1 ? 2 : 1)}x</span></div>
-        </div>
-      `).join("");
 
       document.getElementById("model-rows").innerHTML = results.map(item => `
         <div class="table-row">
