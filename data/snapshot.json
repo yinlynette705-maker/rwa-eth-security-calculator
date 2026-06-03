@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-06-02",
+  "updatedAt": "2026-06-03",
   "rwa": {
     "ethChainTotalUsd": 178600000000
   },
- "eth": {
-    "marketCapUsd": 238870000000,
-    "priceUsd": 1978,
-    "supply": 120685000,
+  "eth": {
+    "marketCapUsd": 224000000000,
+    "priceUsd": 1860,
+    "supply": 120700000,
     "stakingRatio": 0.3253
   }
 }
